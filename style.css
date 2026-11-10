@@ -1,3 +1,12 @@
+header {
+    display: flex;
+    background-color: #1f2937;
+    color: white;
+    padding: 20px;
+    justify-content: space-between;
+    align-items: center;
+}
+
 
 body {
     background-color: #e5e4ed;
@@ -13,4 +22,12 @@ section {
 
 h2 {
     color: #166534;
+}
+
+nav a {
+    color: #f8fdfa;
+    margin-right: 15px;
+    font-weight: bold;
+    text-decoration: none;
+
 }
