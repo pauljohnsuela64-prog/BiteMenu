@@ -1,29 +1,27 @@
 
 "use strict";
 
-/*
- * BITEMENU — RESTAURANT MENU
- * Phase 4: Dynamic Food Cards
- *
- * This file stores menu data and creates
- * HTML cards using JavaScript.
- */
+/* =========================================
+   BITEMENU — COMPLETE JAVASCRIPT
+   Version 1.0
+   Phase 7: Shopping Cart Persistence
+   ========================================= */
 
 
 /* =========================================
-   1. FOOD DATA
+   1. RESTAURANT FOOD DATA
    ========================================= */
 
 /*
- * An array stores multiple food objects.
+ * menuItems is an array containing food objects.
  *
- * Each object contains:
- * id          = Unique food identifier
- * name        = Food name
- * category    = Type of food
- * price       = Price in Philippine pesos
- * description = Short food description
- * emoji       = Temporary food illustration
+ * Each food object has:
+ * id          - Unique food identifier
+ * name        - Name of the food
+ * category    - Food category
+ * price       - Price in Philippine pesos
+ * description - Food description
+ * emoji       - Food illustration
  */
 
 const menuItems = [
@@ -95,17 +93,42 @@ const menuItems = [
 
 
 /* =========================================
-   2. FORMAT PRICE
+   2. APPLICATION STATE
+   ========================================= */
+
+/*
+ * These variables keep track of the menu
+ * and the customer's current cart.
+ */
+
+// Currently selected food category.
+let activeCategory = "All";
+
+// Current search text.
+let searchTerm = "";
+
+// Shopping cart stored as food ID => quantity.
+const cart = new Map();
+
+// Maximum quantity of one food item.
+const MAX_QUANTITY = 99;
+
+// Unique name used to save cart data.
+const CART_STORAGE_KEY = "bitemenu-cart-v1";
+
+
+/* =========================================
+   3. HELPER FUNCTIONS
    ========================================= */
 
 /**
  * Converts a number into Philippine peso format.
  *
- * @param {number} price - The food price.
- * @returns {string} Formatted currency text.
+ * @param {number} price - Amount to format.
+ * @returns {string} Formatted peso amount.
  *
  * Example:
- * formatPrice(149) returns "₱149.00"
+ * formatPrice(149) -> "₱149.00"
  */
 function formatPrice(price) {
     return new Intl.NumberFormat("en-PH", {
@@ -115,27 +138,40 @@ function formatPrice(price) {
 }
 
 
+/**
+ * Finds one food item using its unique ID.
+ *
+ * @param {number} id - Food identifier.
+ * @returns {object|undefined} Matching food item.
+ */
+function findFoodById(id) {
+    return menuItems.find(function (item) {
+        return item.id === id;
+    });
+}
+
+
 /* =========================================
-   3. CREATE FOOD CARD
+   4. CREATE FOOD CARDS
    ========================================= */
 
 /**
- * Creates one HTML food card from a food object.
+ * Creates a food card using JavaScript.
  *
- * @param {object} item - Food item information.
- * @returns {HTMLElement} The completed food card.
+ * @param {object} item - Food information.
+ * @returns {HTMLElement} Completed food card.
  *
- * document.createElement() creates HTML elements.
- * textContent sets their text safely.
- * append() places child elements inside parents.
+ * The function creates HTML elements,
+ * fills them with food information, and
+ * returns the card.
  */
 function createFoodCard(item) {
 
-    // Create the main card.
+    // Main card container.
     const card = document.createElement("article");
     card.className = "food-card";
 
-    // Create the illustration area.
+    // Food illustration container.
     const image = document.createElement("div");
     image.className = "food-image";
 
@@ -145,53 +181,46 @@ function createFoodCard(item) {
 
     image.append(emoji);
 
-    // Create the card information container.
+    // Food information container.
     const content = document.createElement("div");
     content.className = "food-content";
 
-    // Display the food category.
+    // Food category.
     const category = document.createElement("span");
     category.className = "food-category";
     category.textContent = item.category;
 
-    // Display the food name.
+    // Food name.
     const title = document.createElement("h3");
     title.textContent = item.name;
 
-    // Display the food description.
+    // Food description.
     const description = document.createElement("p");
     description.className = "food-description";
     description.textContent = item.description;
 
-    // Create the price label.
+    // Food price.
     const price = document.createElement("strong");
     price.className = "food-price";
     price.textContent = formatPrice(item.price);
 
-    // Insert information inside the content area.
-    
-    // Create an Add to Cart button for this food item.
+    // Add to Cart button.
     const addButton = document.createElement("button");
 
-    // Apply the CSS class for styling.
-    addButton.className = "add-to-cart-btn";
-
-    // Store the food ID so JavaScript knows what to add.
-    addButton.dataset.id = String(item.id);
-
-    // Identify the button's action.
-    addButton.dataset.action = "add";
-
     addButton.type = "button";
+    addButton.className = "add-to-cart-btn";
     addButton.textContent = "Add to Cart";
 
-    // Give the button a descriptive accessible name.
+    // Store the item ID and action on the button.
+    addButton.dataset.id = String(item.id);
+    addButton.dataset.action = "add";
+
     addButton.setAttribute(
         "aria-label",
         `Add ${item.name} to cart`
     );
 
-    // Add all elements to the food card.
+    // Combine all card information.
     content.append(
         category,
         title,
@@ -200,55 +229,43 @@ function createFoodCard(item) {
         addButton
     );
 
-
-    // Combine the illustration and content.
     card.append(image, content);
 
-    // Return the finished HTML card.
     return card;
 }
 
 
 /* =========================================
-   4. RENDER THE FOOD MENU
+   5. DISPLAY THE FOOD MENU
    ========================================= */
 
 /**
  * Displays food items inside the menu grid.
  *
  * @param {Array<object>} items - Foods to display.
- * @returns {void} Nothing is returned.
+ * @returns {void}
  *
- * This function clears the current grid and
- * generates fresh cards from the supplied items.
- */
-
-/**
- * Displays food items inside the menu grid.
- *
- * @param {Array<object>} items - Food items to display.
- * @returns {void} This function returns nothing.
- *
- * If no items match, an empty-state message
- * appears instead of a blank grid.
+ * Existing cards are removed before
+ * new cards are displayed.
  */
 function renderMenu(items) {
+
     const menuGrid = document.getElementById("menu-grid");
 
-    // Stop if the expected HTML container is missing.
     if (!menuGrid) {
-        console.error("BiteMenu: Menu grid was not found.");
+        console.error("BiteMenu: Menu grid not found.");
         return;
     }
 
-    // Remove previously displayed food cards.
+    // Clear previous food cards.
     menuGrid.replaceChildren();
 
-    // Show a message when no food matches the filters.
+    // Display a message when nothing matches.
     if (items.length === 0) {
-        const message = document.createElement("p");
 
+        const message = document.createElement("p");
         message.className = "menu-empty";
+
         message.textContent =
             "No matching food found. Try another search or category.";
 
@@ -256,356 +273,448 @@ function renderMenu(items) {
         return;
     }
 
-    // Prepare the new food cards.
+    // Prepare the food cards.
     const fragment = document.createDocumentFragment();
 
-    // Create a card for each item.
     items.forEach(function (item) {
-        const card = createFoodCard(item);
-        fragment.append(card);
+        fragment.append(createFoodCard(item));
     });
 
-    // Insert the completed cards into the page.
+    // Display the completed cards.
     menuGrid.append(fragment);
 }
 
 
-
 /* =========================================
-   5. INITIALIZE THE APPLICATION
+   6. SEARCH AND CATEGORY FILTERS
    ========================================= */
-
-// Display all food items when the page loads.
-
-/* =========================================
-   PHASE 5 — SEARCH AND CATEGORY FILTERING
-   ========================================= */
-
-/*
- * Application state:
- *
- * activeCategory stores the selected filter.
- * searchTerm stores what the visitor typed.
- */
-let activeCategory = "All";
-let searchTerm = "";
-
 
 /**
- * Filters the complete menu using the current
- * search text and selected category.
+ * Filters foods using the current category
+ * and search text.
  *
- * @returns {void} Updates the displayed cards.
+ * @returns {void}
  *
- * Both conditions must match:
- * 1. The selected category
- * 2. The current search text
+ * Both the category and search must match
+ * before a food card is displayed.
  */
 function applyFilters() {
 
-    // Create a new array of matching food items.
     const filteredItems = menuItems.filter(function (item) {
 
-        // Check if this item belongs to the category.
+        // Check selected category.
         const matchesCategory =
             activeCategory === "All" ||
             item.category === activeCategory;
 
-        // Make searching case-insensitive.
+        // Normalize search text.
         const search = searchTerm.trim().toLowerCase();
 
-        // Search by food name or description.
+        // Search names and descriptions.
         const matchesSearch =
             item.name.toLowerCase().includes(search) ||
             item.description.toLowerCase().includes(search);
 
-        // Keep only items matching both conditions.
         return matchesCategory && matchesSearch;
     });
 
-    // Show the filtered cards.
     renderMenu(filteredItems);
-
-    // Update the number of matching items.
     updateResultsCount(filteredItems.length);
 }
 
 
 /**
- * Updates the number of matching menu items.
+ * Updates the text showing how many
+ * food items match the current filters.
  *
- * @param {number} count - Number of matching foods.
- * @returns {void} Updates the result counter.
+ * @param {number} count - Number of results.
+ * @returns {void}
  */
 function updateResultsCount(count) {
 
     const counter = document.getElementById("results-count");
 
-    // Stop if the result counter does not exist.
     if (!counter) {
         return;
     }
 
-    // Use singular or plural text as appropriate.
-    const itemLabel = count === 1 ? "item" : "items";
+    const label = count === 1 ? "item" : "items";
 
-    counter.textContent = `${count} food ${itemLabel} found`;
+    counter.textContent = `${count} food ${label} found`;
 }
 
 
 /**
- * Handles typing inside the food search box.
+ * Runs whenever the visitor types in search.
  *
- * @param {Event} event - The browser input event.
- * @returns {void} Updates searchTerm and menu cards.
+ * @param {Event} event - Browser input event.
+ * @returns {void}
  */
 function handleSearchInput(event) {
 
-    // Read the text currently entered by the visitor.
     searchTerm = event.target.value;
 
-    // Refresh the visible food cards.
     applyFilters();
 }
 
 
 /**
- * Handles clicking a category filter button.
+ * Runs whenever a category button is clicked.
  *
- * @param {MouseEvent} event - The click event.
- * @returns {void} Changes the active category.
+ * @param {MouseEvent} event - Browser click event.
+ * @returns {void}
  */
 function handleCategoryClick(event) {
 
-    // Identify the clicked button.
     const clickedButton = event.currentTarget;
 
-    // Read its data-category HTML attribute.
     activeCategory = clickedButton.dataset.category;
 
-    // Find every category button.
     const buttons = document.querySelectorAll(".filter-btn");
 
-    // Update visual and accessibility states.
+    // Update the selected button appearance.
     buttons.forEach(function (button) {
 
         const isActive =
             button.dataset.category === activeCategory;
 
-        // Apply the active CSS class to the selection.
         button.classList.toggle("active", isActive);
 
-        // Tell assistive technology if selected.
-        button.setAttribute("aria-pressed", String(isActive));
+        button.setAttribute(
+            "aria-pressed",
+            String(isActive)
+        );
     });
 
-    // Display matching food items.
     applyFilters();
 }
 
 
 /**
- * Clears the search input and category selection.
+ * Resets search and category filters.
  *
- * @returns {void} Restores the complete food menu.
+ * @returns {void}
  */
 function clearFilters() {
 
-    const searchInput = document.getElementById("menu-search");
-
-    // Restore the default filter state.
     searchTerm = "";
     activeCategory = "All";
 
-    // Clear the visible search field.
+    const searchInput = document.getElementById("menu-search");
+
     if (searchInput) {
         searchInput.value = "";
     }
 
-    // Reset every category button.
     const buttons = document.querySelectorAll(".filter-btn");
 
     buttons.forEach(function (button) {
+
         const isActive = button.dataset.category === "All";
 
         button.classList.toggle("active", isActive);
         button.setAttribute("aria-pressed", String(isActive));
     });
 
-    // Show the complete menu again.
     applyFilters();
 }
 
 
 /**
- * Initializes the restaurant menu controls.
+ * Initializes menu search and category filtering.
  *
- * @returns {void} Registers browser event listeners
- * and displays all food items.
- *
- * This function runs once when the script loads.
+ * @returns {void}
  */
 function initializeMenu() {
 
-    // Find the search input and reset button.
     const searchInput = document.getElementById("menu-search");
     const clearButton = document.getElementById("clear-filters");
 
-    // Find all category filter buttons.
-    const categoryButtons = document.querySelectorAll(".filter-btn");
+    const categoryButtons =
+        document.querySelectorAll(".filter-btn");
 
-    // Listen for changes as visitors type.
     if (searchInput) {
-        searchInput.addEventListener("input", handleSearchInput);
+        searchInput.addEventListener(
+            "input",
+            handleSearchInput
+        );
     }
 
-    // Register a click listener for every category.
     categoryButtons.forEach(function (button) {
-        button.addEventListener("click", handleCategoryClick);
+        button.addEventListener(
+            "click",
+            handleCategoryClick
+        );
     });
 
-    // Register the reset button event.
     if (clearButton) {
-        clearButton.addEventListener("click", clearFilters);
+        clearButton.addEventListener(
+            "click",
+            clearFilters
+        );
     }
 
-    // Display the original menu on page load.
+    // Show all food items initially.
     applyFilters();
 }
 
 
-// Start the BiteMenu application.
-initializeMenu();
-
-
 /* =========================================
-   PHASE 6 — SHOPPING CART
+   7. SAVE SHOPPING CART
    ========================================= */
 
-/*
- * The cart is a Map:
- *
- * Key   = Unique food item ID
- * Value = Quantity ordered
- *
- * Example:
- * 1 => 2 means two Classic Cheeseburgers.
- *
- * The cart exists in memory for now.
- * We will save it in localStorage in Phase 7.
- */
-const cart = new Map();
-
-// Maximum quantity allowed for one food item.
-const MAX_QUANTITY = 99;
-
-
 /**
- * Finds a food item using its unique ID.
+ * Saves the current cart in localStorage.
  *
- * @param {number} id - Food item ID.
- * @returns {object|undefined} The matching food item,
- * or undefined if no item exists.
+ * @returns {boolean} Whether saving succeeded.
+ *
+ * Maps cannot be saved directly as JSON,
+ * so we convert the cart into an array.
  */
-function findFoodById(id) {
-    return menuItems.find(function (item) {
-        return item.id === id;
-    });
+function saveCart() {
+
+    try {
+
+        // Convert the Map into a JSON-friendly object.
+        const cartData = {
+            version: 1,
+            items: Array.from(cart.entries())
+        };
+
+        const json = JSON.stringify(cartData);
+
+        // Store the data in the browser.
+        localStorage.setItem(CART_STORAGE_KEY, json);
+
+        return true;
+
+    } catch (error) {
+
+        console.warn(
+            "BiteMenu: Could not save cart.",
+            error
+        );
+
+        return false;
+    }
 }
 
 
+/* =========================================
+   8. RESTORE SHOPPING CART
+   ========================================= */
+
 /**
- * Adds one unit of a food item to the cart.
+ * Loads previously saved shopping cart data.
  *
- * @param {number} id - Food item ID.
+ * @returns {boolean} Whether valid saved data
+ * was successfully restored.
+ *
+ * Invalid food IDs and quantities are ignored
+ * to prevent corrupted cart information.
+ */
+function loadCart() {
+
+    try {
+
+        // Find previously saved data.
+        const saved = localStorage.getItem(CART_STORAGE_KEY);
+
+        if (saved === null) {
+            return false;
+        }
+
+        // Convert JSON text into JavaScript data.
+        const data = JSON.parse(saved);
+
+        // Validate the saved data structure.
+        if (
+            !data ||
+            data.version !== 1 ||
+            !Array.isArray(data.items)
+        ) {
+            console.warn("BiteMenu: Invalid saved cart.");
+            return false;
+        }
+
+        const restored = new Map();
+
+        // Inspect each stored food entry.
+        for (const entry of data.items) {
+
+            if (
+                !Array.isArray(entry) ||
+                entry.length !== 2
+            ) {
+                continue;
+            }
+
+            const [id, quantity] = entry;
+
+            // Only accept real food IDs and safe quantities.
+            if (
+                !Number.isInteger(id) ||
+                !findFoodById(id) ||
+                !Number.isInteger(quantity) ||
+                quantity < 1 ||
+                quantity > MAX_QUANTITY ||
+                restored.has(id)
+            ) {
+                continue;
+            }
+
+            restored.set(id, quantity);
+        }
+
+        // Replace old cart contents.
+        cart.clear();
+
+        for (const [id, quantity] of restored) {
+            cart.set(id, quantity);
+        }
+
+        return true;
+
+    } catch (error) {
+
+        console.warn(
+            "BiteMenu: Could not restore cart.",
+            error
+        );
+
+        return false;
+    }
+}
+
+
+/* =========================================
+   9. ADD AND MANAGE CART ITEMS
+   ========================================= */
+
+/**
+ * Adds one food item to the shopping cart.
+ *
+ * @param {number} id - Unique food ID.
  * @returns {void}
  *
- * If the item already exists, its quantity
- * increases by one instead of adding a duplicate row.
+ * If the product already exists, its quantity
+ * increases instead of creating another row.
  */
 function addToCart(id) {
+
     const food = findFoodById(id);
 
-    // Reject unknown food IDs.
     if (!food) {
         return;
     }
 
-    // Read the current quantity, defaulting to zero.
     const currentQuantity = cart.get(id) || 0;
 
-    // Prevent excessive quantities.
     if (currentQuantity >= MAX_QUANTITY) {
         showCartMessage("Maximum quantity reached.");
         return;
     }
 
-    // Save the updated quantity.
     cart.set(id, currentQuantity + 1);
 
-    // Refresh the shopping cart interface.
+    // NEW: Save the cart after adding an item.
+    saveCart();
+
     renderCart();
 
-    // Tell the visitor what happened.
     showCartMessage(`${food.name} added to your cart!`);
 }
 
 
 /**
- * Changes the quantity of a cart item.
+ * Increases or decreases a cart item's quantity.
  *
- * @param {number} id - Food item ID.
+ * @param {number} id - Food ID.
  * @param {number} change - Usually +1 or -1.
  * @returns {void}
- *
- * A quantity of zero removes the item.
  */
 function changeQuantity(id, change) {
+
     const currentQuantity = cart.get(id);
 
-    // Stop if the item is not in the cart.
     if (!currentQuantity) {
         return;
     }
 
     const newQuantity = currentQuantity + change;
 
+    // Remove the item when quantity reaches zero.
     if (newQuantity <= 0) {
+
         cart.delete(id);
+
     } else if (newQuantity <= MAX_QUANTITY) {
+
         cart.set(id, newQuantity);
+
     } else {
+
         return;
     }
 
-    // Update the visible cart after the change.
+    // NEW: Save the changed quantity.
+    saveCart();
+
     renderCart();
 }
 
 
 /**
- * Removes one product completely from the cart.
+ * Completely removes a food item from the cart.
  *
- * @param {number} id - Food item ID.
+ * @param {number} id - Food ID.
  * @returns {void}
  */
 function removeFromCart(id) {
+
     cart.delete(id);
 
+    // NEW: Save after removing an item.
+    saveCart();
+
     renderCart();
+
     showCartMessage("Item removed from your cart.");
 }
 
 
 /**
- * Calculates the total quantity of all cart items.
+ * Removes every product from the shopping cart.
  *
- * @returns {number} Total number of units.
+ * @returns {void}
+ */
+function clearCart() {
+
+    cart.clear();
+
+    // NEW: Save the empty cart.
+    saveCart();
+
+    renderCart();
+
+    showCartMessage("Your cart has been cleared.");
+}
+
+
+/* =========================================
+   10. CART CALCULATIONS
+   ========================================= */
+
+/**
+ * Calculates the number of items in the cart.
+ *
+ * @returns {number} Total quantity.
  *
  * Example:
- * 2 burgers + 3 drinks = 5 items.
+ * 2 burgers + 3 coffees = 5 items.
  */
 function calculateItemCount() {
+
     let count = 0;
 
     for (const quantity of cart.values()) {
@@ -617,17 +726,19 @@ function calculateItemCount() {
 
 
 /**
- * Calculates the total price of the cart.
+ * Calculates the total cost of the order.
  *
- * @returns {number} Total price in pesos.
+ * @returns {number} Total amount in pesos.
  *
  * Formula:
- * Total = Sum of (food price × quantity).
+ * Total = sum of (price × quantity).
  */
 function calculateCartTotal() {
+
     let total = 0;
 
     for (const [id, quantity] of cart) {
+
         const food = findFoodById(id);
 
         if (food) {
@@ -639,13 +750,18 @@ function calculateCartTotal() {
 }
 
 
+/* =========================================
+   11. CART STATUS MESSAGES
+   ========================================= */
+
 /**
- * Displays a status message below the cart heading.
+ * Displays feedback when the cart changes.
  *
  * @param {string} message - Message to display.
  * @returns {void}
  */
 function showCartMessage(message) {
+
     const element = document.getElementById("cart-message");
 
     if (element) {
@@ -654,29 +770,37 @@ function showCartMessage(message) {
 }
 
 
+/* =========================================
+   12. CREATE CART BUTTONS
+   ========================================= */
+
 /**
- * Creates a shopping cart action button.
+ * Creates a plus, minus, or remove button.
  *
- * @param {string} text - Visible button text.
- * @param {string} action - increase, decrease, or remove.
- * @param {number} id - Food item ID.
- * @param {boolean} disabled - Whether clicking is disabled.
- * @returns {HTMLButtonElement} The new button.
+ * @param {string} text - Button text.
+ * @param {string} action - Button action.
+ * @param {number} id - Food ID.
+ * @param {boolean} disabled - Disabled state.
+ * @returns {HTMLButtonElement} New button.
  */
-function createCartButton(text, action, id, disabled = false) {
+function createCartButton(
+    text,
+    action,
+    id,
+    disabled = false
+) {
+
     const button = document.createElement("button");
 
     button.type = "button";
     button.className = "quantity-btn";
     button.textContent = text;
 
-    // Store the action and item identifier.
     button.dataset.action = action;
     button.dataset.id = String(id);
 
     button.disabled = disabled;
 
-    // Provide more descriptive names for screen readers.
     const food = findFoodById(id);
     const name = food ? food.name : "item";
 
@@ -686,24 +810,32 @@ function createCartButton(text, action, id, disabled = false) {
         remove: `Remove ${name} from cart`
     };
 
-    button.setAttribute("aria-label", labels[action]);
+    button.setAttribute(
+        "aria-label",
+        labels[action]
+    );
 
     return button;
 }
 
 
+/* =========================================
+   13. CREATE CART ROW
+   ========================================= */
+
 /**
- * Creates one row in the shopping cart.
+ * Creates one product row in the cart.
  *
- * @param {object} food - The food information.
- * @param {number} quantity - Amount ordered.
- * @returns {HTMLElement} The completed cart row.
+ * @param {object} food - Food information.
+ * @param {number} quantity - Number ordered.
+ * @returns {HTMLElement} Completed cart row.
  */
 function createCartRow(food, quantity) {
+
     const row = document.createElement("div");
     row.className = "cart-item";
 
-    // Container for the product name and subtotal.
+    // Product name and subtotal.
     const details = document.createElement("div");
     details.className = "cart-item-details";
 
@@ -711,11 +843,12 @@ function createCartRow(food, quantity) {
     name.textContent = food.name;
 
     const subtotal = document.createElement("span");
-    subtotal.textContent = formatPrice(food.price * quantity);
+    subtotal.textContent =
+        formatPrice(food.price * quantity);
 
     details.append(name, subtotal);
 
-    // Container for quantity buttons and number.
+    // Quantity adjustment controls.
     const controls = document.createElement("div");
     controls.className = "quantity-controls";
 
@@ -740,24 +873,36 @@ function createCartRow(food, quantity) {
 
     remove.classList.add("remove-btn");
 
-    controls.append(decrease, amount, increase, remove);
+    controls.append(
+        decrease,
+        amount,
+        increase,
+        remove
+    );
 
-    // Combine the row's information and controls.
     row.append(details, controls);
 
     return row;
 }
 
 
+/* =========================================
+   14. DISPLAY SHOPPING CART
+   ========================================= */
+
 /**
- * Updates the entire cart interface.
+ * Refreshes the complete shopping cart display.
  *
  * @returns {void}
  *
- * Rebuilds the cart rows, recalculates totals,
- * and enables or disables relevant buttons.
+ * Updates:
+ * - Product rows
+ * - Total item count
+ * - Overall order total
+ * - Clear and Review button states
  */
 function renderCart() {
+
     const container = document.getElementById("cart-items");
     const countElement = document.getElementById("cart-count");
     const totalElement = document.getElementById("cart-total");
@@ -765,33 +910,38 @@ function renderCart() {
     const clearButton = document.getElementById("clear-cart");
     const orderButton = document.getElementById("place-order");
 
-    if (!container || !countElement || !totalElement ||
-        !clearButton || !orderButton) {
+    if (
+        !container ||
+        !countElement ||
+        !totalElement ||
+        !clearButton ||
+        !orderButton
+    ) {
         console.error("BiteMenu: Cart elements are missing.");
         return;
     }
 
-    // Remove previously displayed cart rows.
+    // Clear the old display.
     container.replaceChildren();
 
     const count = calculateItemCount();
     const total = calculateCartTotal();
 
-    // Update the visible item count and price.
+    // Display updated totals.
     countElement.textContent =
         `${count} ${count === 1 ? "item" : "items"}`;
 
     totalElement.textContent = formatPrice(total);
 
-    // Disable controls when nothing has been ordered.
+    // Disable buttons if the cart is empty.
     clearButton.disabled = count === 0;
     orderButton.disabled = count === 0;
 
-    // Show an empty-cart message if needed.
     if (count === 0) {
-        const empty = document.createElement("p");
 
+        const empty = document.createElement("p");
         empty.className = "cart-empty";
+
         empty.textContent =
             "Your cart is empty. Add something delicious!";
 
@@ -799,15 +949,17 @@ function renderCart() {
         return;
     }
 
-    // Build the cart rows in memory first.
+    // Create rows for each selected food.
     const fragment = document.createDocumentFragment();
 
     for (const [id, quantity] of cart) {
+
         const food = findFoodById(id);
 
         if (food) {
-            const row = createCartRow(food, quantity);
-            fragment.append(row);
+            fragment.append(
+                createCartRow(food, quantity)
+            );
         }
     }
 
@@ -815,38 +967,35 @@ function renderCart() {
 }
 
 
-/**
- * Removes every item from the shopping cart.
- *
- * @returns {void}
- */
-function clearCart() {
-    cart.clear();
-
-    renderCart();
-    showCartMessage("Your cart has been cleared.");
-}
-
+/* =========================================
+   15. SIMULATED ORDER SUMMARY
+   ========================================= */
 
 /**
- * Displays a simulated order summary.
+ * Displays an order summary using an alert.
  *
  * @returns {void}
  *
- * This is not a real checkout.
- * No order is submitted and no payment is collected.
+ * This is only a demo.
+ * No payment or order submission occurs.
  */
 function reviewOrder() {
+
     if (cart.size === 0) {
         return;
     }
 
-    const lines = ["BITEMENU — ORDER SUMMARY", ""];
+    const lines = [
+        "BITEMENU — ORDER SUMMARY",
+        ""
+    ];
 
     for (const [id, quantity] of cart) {
+
         const food = findFoodById(id);
 
         if (food) {
+
             const subtotal = food.price * quantity;
 
             lines.push(
@@ -864,21 +1013,34 @@ function reviewOrder() {
 }
 
 
+/* =========================================
+   16. HANDLE MENU BUTTON CLICKS
+   ========================================= */
+
 /**
- * Handles Add to Cart button clicks in the menu.
+ * Detects Add to Cart clicks inside the menu grid.
  *
  * @param {MouseEvent} event - Browser click event.
  * @returns {void}
  *
- * Uses event delegation, so we only need
- * one listener for all dynamically created cards.
+ * Event delegation lets one listener handle
+ * every dynamically generated food card.
  */
 function handleMenuCartClick(event) {
+
+    // Only process clicks originating from elements.
+    if (!(event.target instanceof Element)) {
+        return;
+    }
+
     const button = event.target.closest(
         'button[data-action="add"]'
     );
 
-    if (!button || !event.currentTarget.contains(button)) {
+    if (
+        !button ||
+        !event.currentTarget.contains(button)
+    ) {
         return;
     }
 
@@ -888,20 +1050,30 @@ function handleMenuCartClick(event) {
 }
 
 
+/* =========================================
+   17. HANDLE CART BUTTON CLICKS
+   ========================================= */
+
 /**
- * Handles clicks on cart quantity and remove buttons.
+ * Handles quantity and remove button actions.
  *
  * @param {MouseEvent} event - Browser click event.
  * @returns {void}
- *
- * Reads the action from the clicked button.
  */
 function handleCartAction(event) {
+
+    if (!(event.target instanceof Element)) {
+        return;
+    }
+
     const button = event.target.closest(
         "button[data-action]"
     );
 
-    if (!button || !event.currentTarget.contains(button)) {
+    if (
+        !button ||
+        !event.currentTarget.contains(button)
+    ) {
         return;
     }
 
@@ -909,53 +1081,90 @@ function handleCartAction(event) {
     const action = button.dataset.action;
 
     if (action === "increase") {
+
         changeQuantity(id, 1);
+
     } else if (action === "decrease") {
+
         changeQuantity(id, -1);
+
     } else if (action === "remove") {
+
         removeFromCart(id);
     }
 }
 
 
+/* =========================================
+   18. INITIALIZE SHOPPING CART
+   ========================================= */
+
 /**
- * Initializes shopping cart event listeners.
+ * Connects cart buttons to their functions.
  *
  * @returns {void}
  *
- * Runs once when the webpage loads.
+ * Runs once when the website loads.
  */
 function initializeCart() {
+
     const menuGrid = document.getElementById("menu-grid");
     const cartItems = document.getElementById("cart-items");
 
     const clearButton = document.getElementById("clear-cart");
     const orderButton = document.getElementById("place-order");
 
-    // Attach one click listener to the food grid.
+    // Handle Add to Cart buttons.
     if (menuGrid) {
-        menuGrid.addEventListener("click", handleMenuCartClick);
+        menuGrid.addEventListener(
+            "click",
+            handleMenuCartClick
+        );
     }
 
-    // Attach one click listener to all cart rows.
+    // Handle quantity adjustment buttons.
     if (cartItems) {
-        cartItems.addEventListener("click", handleCartAction);
+        cartItems.addEventListener(
+            "click",
+            handleCartAction
+        );
     }
 
+    // Handle Clear Cart button.
     if (clearButton) {
-        clearButton.addEventListener("click", clearCart);
+        clearButton.addEventListener(
+            "click",
+            clearCart
+        );
     }
 
+    // Handle Review Order button.
     if (orderButton) {
-        orderButton.addEventListener("click", reviewOrder);
+        orderButton.addEventListener(
+            "click",
+            reviewOrder
+        );
     }
 
-    // Draw the initial empty cart.
+    // Display the restored or empty cart.
     renderCart();
 }
 
 
-// Start the shopping cart feature.
+/* =========================================
+   19. START THE APPLICATION
+   ========================================= */
+
+/*
+ * Initialization order is important:
+ *
+ * 1. Initialize menu search and filters.
+ * 2. Restore saved shopping cart data.
+ * 3. Register cart events and display cart.
+ */
+
+initializeMenu();
+
+loadCart();
+
 initializeCart();
-
-
