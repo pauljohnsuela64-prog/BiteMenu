@@ -82,6 +82,90 @@
             JavaScript will insert the food cards
             inside this container.
         -->
+        
+<!-- MENU SEARCH AND CATEGORY FILTERS -->
+<div class="menu-controls">
+
+    <!-- Search input: JavaScript reads its value. -->
+    <div class="search-container">
+        <label for="menu-search">
+            Search our menu
+        </label>
+
+        <input
+            type="search"
+            id="menu-search"
+            placeholder="Search burgers, pizza, drinks..."
+            autocomplete="off"
+        >
+    </div>
+
+    <!-- Category buttons for filtering food items. -->
+    <div
+        class="category-filters"
+        role="group"
+        aria-label="Filter by food category"
+    >
+        <button
+            type="button"
+            class="filter-btn active"
+            data-category="All"
+            aria-pressed="true"
+        >
+            All
+        </button>
+
+        <button
+            type="button"
+            class="filter-btn"
+            data-category="Burgers"
+            aria-pressed="false"
+        >
+            Burgers
+        </button>
+
+        <button
+            type="button"
+            class="filter-btn"
+            data-category="Pizza"
+            aria-pressed="false"
+        >
+            Pizza
+        </button>
+
+        <button
+            type="button"
+            class="filter-btn"
+            data-category="Drinks"
+            aria-pressed="false"
+        >
+            Drinks
+        </button>
+
+        <button
+            type="button"
+            class="filter-btn"
+            data-category="Desserts"
+            aria-pressed="false"
+        >
+            Desserts
+        </button>
+    </div>
+
+    <!-- Result count and reset control. -->
+    <div class="menu-results">
+        <p id="results-count" role="status" aria-live="polite">
+            Showing all menu items
+        </p>
+
+        <button type="button" id="clear-filters">
+            Clear Filters
+        </button>
+    </div>
+
+</div>
+
+
         <div id="menu-grid" class="menu-grid"></div>
 
     </div>

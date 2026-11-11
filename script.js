@@ -192,36 +192,53 @@ function createFoodCard(item) {
  * This function clears the current grid and
  * generates fresh cards from the supplied items.
  */
-function renderMenu(items) {
 
-    // Find the menu container in index.html.
+/**
+ * Displays food items inside the menu grid.
+ *
+ * @param {Array<object>} items - Food items to display.
+ * @returns {void} This function returns nothing.
+ *
+ * If no items match, an empty-state message
+ * appears instead of a blank grid.
+ */
+function renderMenu(items) {
     const menuGrid = document.getElementById("menu-grid");
 
-    // Stop if the container does not exist.
+    // Stop if the expected HTML container is missing.
     if (!menuGrid) {
         console.error("BiteMenu: Menu grid was not found.");
         return;
     }
 
-    // Clear any existing food cards.
+    // Remove previously displayed food cards.
     menuGrid.replaceChildren();
 
-    // Create a document fragment for the new cards.
+    // Show a message when no food matches the filters.
+    if (items.length === 0) {
+        const message = document.createElement("p");
+
+        message.className = "menu-empty";
+        message.textContent =
+            "No matching food found. Try another search or category.";
+
+        menuGrid.append(message);
+        return;
+    }
+
+    // Prepare the new food cards.
     const fragment = document.createDocumentFragment();
 
-    // Loop through each food item.
+    // Create a card for each item.
     items.forEach(function (item) {
-
-        // Create a card from the food information.
         const card = createFoodCard(item);
-
-        // Add the card to the fragment.
         fragment.append(card);
     });
 
-    // Insert all cards into the menu at once.
+    // Insert the completed cards into the page.
     menuGrid.append(fragment);
 }
+
 
 
 /* =========================================
@@ -229,4 +246,204 @@ function renderMenu(items) {
    ========================================= */
 
 // Display all food items when the page loads.
-renderMenu(menuItems);
+
+/* =========================================
+   PHASE 5 — SEARCH AND CATEGORY FILTERING
+   ========================================= */
+
+/*
+ * Application state:
+ *
+ * activeCategory stores the selected filter.
+ * searchTerm stores what the visitor typed.
+ */
+let activeCategory = "All";
+let searchTerm = "";
+
+
+/**
+ * Filters the complete menu using the current
+ * search text and selected category.
+ *
+ * @returns {void} Updates the displayed cards.
+ *
+ * Both conditions must match:
+ * 1. The selected category
+ * 2. The current search text
+ */
+function applyFilters() {
+
+    // Create a new array of matching food items.
+    const filteredItems = menuItems.filter(function (item) {
+
+        // Check if this item belongs to the category.
+        const matchesCategory =
+            activeCategory === "All" ||
+            item.category === activeCategory;
+
+        // Make searching case-insensitive.
+        const search = searchTerm.trim().toLowerCase();
+
+        // Search by food name or description.
+        const matchesSearch =
+            item.name.toLowerCase().includes(search) ||
+            item.description.toLowerCase().includes(search);
+
+        // Keep only items matching both conditions.
+        return matchesCategory && matchesSearch;
+    });
+
+    // Show the filtered cards.
+    renderMenu(filteredItems);
+
+    // Update the number of matching items.
+    updateResultsCount(filteredItems.length);
+}
+
+
+/**
+ * Updates the number of matching menu items.
+ *
+ * @param {number} count - Number of matching foods.
+ * @returns {void} Updates the result counter.
+ */
+function updateResultsCount(count) {
+
+    const counter = document.getElementById("results-count");
+
+    // Stop if the result counter does not exist.
+    if (!counter) {
+        return;
+    }
+
+    // Use singular or plural text as appropriate.
+    const itemLabel = count === 1 ? "item" : "items";
+
+    counter.textContent = `${count} food ${itemLabel} found`;
+}
+
+
+/**
+ * Handles typing inside the food search box.
+ *
+ * @param {Event} event - The browser input event.
+ * @returns {void} Updates searchTerm and menu cards.
+ */
+function handleSearchInput(event) {
+
+    // Read the text currently entered by the visitor.
+    searchTerm = event.target.value;
+
+    // Refresh the visible food cards.
+    applyFilters();
+}
+
+
+/**
+ * Handles clicking a category filter button.
+ *
+ * @param {MouseEvent} event - The click event.
+ * @returns {void} Changes the active category.
+ */
+function handleCategoryClick(event) {
+
+    // Identify the clicked button.
+    const clickedButton = event.currentTarget;
+
+    // Read its data-category HTML attribute.
+    activeCategory = clickedButton.dataset.category;
+
+    // Find every category button.
+    const buttons = document.querySelectorAll(".filter-btn");
+
+    // Update visual and accessibility states.
+    buttons.forEach(function (button) {
+
+        const isActive =
+            button.dataset.category === activeCategory;
+
+        // Apply the active CSS class to the selection.
+        button.classList.toggle("active", isActive);
+
+        // Tell assistive technology if selected.
+        button.setAttribute("aria-pressed", String(isActive));
+    });
+
+    // Display matching food items.
+    applyFilters();
+}
+
+
+/**
+ * Clears the search input and category selection.
+ *
+ * @returns {void} Restores the complete food menu.
+ */
+function clearFilters() {
+
+    const searchInput = document.getElementById("menu-search");
+
+    // Restore the default filter state.
+    searchTerm = "";
+    activeCategory = "All";
+
+    // Clear the visible search field.
+    if (searchInput) {
+        searchInput.value = "";
+    }
+
+    // Reset every category button.
+    const buttons = document.querySelectorAll(".filter-btn");
+
+    buttons.forEach(function (button) {
+        const isActive = button.dataset.category === "All";
+
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-pressed", String(isActive));
+    });
+
+    // Show the complete menu again.
+    applyFilters();
+}
+
+
+/**
+ * Initializes the restaurant menu controls.
+ *
+ * @returns {void} Registers browser event listeners
+ * and displays all food items.
+ *
+ * This function runs once when the script loads.
+ */
+function initializeMenu() {
+
+    // Find the search input and reset button.
+    const searchInput = document.getElementById("menu-search");
+    const clearButton = document.getElementById("clear-filters");
+
+    // Find all category filter buttons.
+    const categoryButtons = document.querySelectorAll(".filter-btn");
+
+    // Listen for changes as visitors type.
+    if (searchInput) {
+        searchInput.addEventListener("input", handleSearchInput);
+    }
+
+    // Register a click listener for every category.
+    categoryButtons.forEach(function (button) {
+        button.addEventListener("click", handleCategoryClick);
+    });
+
+    // Register the reset button event.
+    if (clearButton) {
+        clearButton.addEventListener("click", clearFilters);
+    }
+
+    // Display the original menu on page load.
+    applyFilters();
+}
+
+
+// Start the BiteMenu application.
+initializeMenu();
+
