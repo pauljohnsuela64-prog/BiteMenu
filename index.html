@@ -169,6 +169,54 @@
         <div id="menu-grid" class="menu-grid"></div>
 
     </div>
+
+<!-- SHOPPING CART: Updated dynamically by JavaScript. -->
+<section class="shopping-cart" aria-labelledby="cart-heading">
+
+    <div class="cart-header">
+        <h3 id="cart-heading">Your Order</h3>
+
+        <!-- Displays the total number of items. -->
+        <span id="cart-count" class="cart-count">
+            0 items
+        </span>
+    </div>
+
+    <!-- Live feedback when an item is added. -->
+    <p id="cart-message" class="cart-message"
+       role="status" aria-live="polite"></p>
+
+    <!-- JavaScript inserts cart items here. -->
+    <div id="cart-items" class="cart-items">
+        <p class="cart-empty">
+            Your cart is empty. Add something delicious!
+        </p>
+    </div>
+
+    <div class="cart-footer">
+
+        <div class="cart-total">
+            <span>Order Total</span>
+            <strong id="cart-total">₱0.00</strong>
+        </div>
+
+        <div class="cart-actions">
+            <button type="button" id="clear-cart"
+                    class="cart-btn cart-btn-secondary"
+                    disabled>
+                Clear Cart
+            </button>
+
+            <button type="button" id="place-order"
+                    class="cart-btn cart-btn-primary"
+                    disabled>
+                Review Order
+            </button>
+        </div>
+
+    </div>
+</section>
+
 </section>
 
 

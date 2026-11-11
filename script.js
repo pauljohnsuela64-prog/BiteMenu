@@ -169,7 +169,37 @@ function createFoodCard(item) {
     price.textContent = formatPrice(item.price);
 
     // Insert information inside the content area.
-    content.append(category, title, description, price);
+    
+    // Create an Add to Cart button for this food item.
+    const addButton = document.createElement("button");
+
+    // Apply the CSS class for styling.
+    addButton.className = "add-to-cart-btn";
+
+    // Store the food ID so JavaScript knows what to add.
+    addButton.dataset.id = String(item.id);
+
+    // Identify the button's action.
+    addButton.dataset.action = "add";
+
+    addButton.type = "button";
+    addButton.textContent = "Add to Cart";
+
+    // Give the button a descriptive accessible name.
+    addButton.setAttribute(
+        "aria-label",
+        `Add ${item.name} to cart`
+    );
+
+    // Add all elements to the food card.
+    content.append(
+        category,
+        title,
+        description,
+        price,
+        addButton
+    );
+
 
     // Combine the illustration and content.
     card.append(image, content);
@@ -446,4 +476,486 @@ function initializeMenu() {
 
 // Start the BiteMenu application.
 initializeMenu();
+
+
+/* =========================================
+   PHASE 6 — SHOPPING CART
+   ========================================= */
+
+/*
+ * The cart is a Map:
+ *
+ * Key   = Unique food item ID
+ * Value = Quantity ordered
+ *
+ * Example:
+ * 1 => 2 means two Classic Cheeseburgers.
+ *
+ * The cart exists in memory for now.
+ * We will save it in localStorage in Phase 7.
+ */
+const cart = new Map();
+
+// Maximum quantity allowed for one food item.
+const MAX_QUANTITY = 99;
+
+
+/**
+ * Finds a food item using its unique ID.
+ *
+ * @param {number} id - Food item ID.
+ * @returns {object|undefined} The matching food item,
+ * or undefined if no item exists.
+ */
+function findFoodById(id) {
+    return menuItems.find(function (item) {
+        return item.id === id;
+    });
+}
+
+
+/**
+ * Adds one unit of a food item to the cart.
+ *
+ * @param {number} id - Food item ID.
+ * @returns {void}
+ *
+ * If the item already exists, its quantity
+ * increases by one instead of adding a duplicate row.
+ */
+function addToCart(id) {
+    const food = findFoodById(id);
+
+    // Reject unknown food IDs.
+    if (!food) {
+        return;
+    }
+
+    // Read the current quantity, defaulting to zero.
+    const currentQuantity = cart.get(id) || 0;
+
+    // Prevent excessive quantities.
+    if (currentQuantity >= MAX_QUANTITY) {
+        showCartMessage("Maximum quantity reached.");
+        return;
+    }
+
+    // Save the updated quantity.
+    cart.set(id, currentQuantity + 1);
+
+    // Refresh the shopping cart interface.
+    renderCart();
+
+    // Tell the visitor what happened.
+    showCartMessage(`${food.name} added to your cart!`);
+}
+
+
+/**
+ * Changes the quantity of a cart item.
+ *
+ * @param {number} id - Food item ID.
+ * @param {number} change - Usually +1 or -1.
+ * @returns {void}
+ *
+ * A quantity of zero removes the item.
+ */
+function changeQuantity(id, change) {
+    const currentQuantity = cart.get(id);
+
+    // Stop if the item is not in the cart.
+    if (!currentQuantity) {
+        return;
+    }
+
+    const newQuantity = currentQuantity + change;
+
+    if (newQuantity <= 0) {
+        cart.delete(id);
+    } else if (newQuantity <= MAX_QUANTITY) {
+        cart.set(id, newQuantity);
+    } else {
+        return;
+    }
+
+    // Update the visible cart after the change.
+    renderCart();
+}
+
+
+/**
+ * Removes one product completely from the cart.
+ *
+ * @param {number} id - Food item ID.
+ * @returns {void}
+ */
+function removeFromCart(id) {
+    cart.delete(id);
+
+    renderCart();
+    showCartMessage("Item removed from your cart.");
+}
+
+
+/**
+ * Calculates the total quantity of all cart items.
+ *
+ * @returns {number} Total number of units.
+ *
+ * Example:
+ * 2 burgers + 3 drinks = 5 items.
+ */
+function calculateItemCount() {
+    let count = 0;
+
+    for (const quantity of cart.values()) {
+        count += quantity;
+    }
+
+    return count;
+}
+
+
+/**
+ * Calculates the total price of the cart.
+ *
+ * @returns {number} Total price in pesos.
+ *
+ * Formula:
+ * Total = Sum of (food price × quantity).
+ */
+function calculateCartTotal() {
+    let total = 0;
+
+    for (const [id, quantity] of cart) {
+        const food = findFoodById(id);
+
+        if (food) {
+            total += food.price * quantity;
+        }
+    }
+
+    return total;
+}
+
+
+/**
+ * Displays a status message below the cart heading.
+ *
+ * @param {string} message - Message to display.
+ * @returns {void}
+ */
+function showCartMessage(message) {
+    const element = document.getElementById("cart-message");
+
+    if (element) {
+        element.textContent = message;
+    }
+}
+
+
+/**
+ * Creates a shopping cart action button.
+ *
+ * @param {string} text - Visible button text.
+ * @param {string} action - increase, decrease, or remove.
+ * @param {number} id - Food item ID.
+ * @param {boolean} disabled - Whether clicking is disabled.
+ * @returns {HTMLButtonElement} The new button.
+ */
+function createCartButton(text, action, id, disabled = false) {
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.className = "quantity-btn";
+    button.textContent = text;
+
+    // Store the action and item identifier.
+    button.dataset.action = action;
+    button.dataset.id = String(id);
+
+    button.disabled = disabled;
+
+    // Provide more descriptive names for screen readers.
+    const food = findFoodById(id);
+    const name = food ? food.name : "item";
+
+    const labels = {
+        increase: `Increase ${name} quantity`,
+        decrease: `Decrease ${name} quantity`,
+        remove: `Remove ${name} from cart`
+    };
+
+    button.setAttribute("aria-label", labels[action]);
+
+    return button;
+}
+
+
+/**
+ * Creates one row in the shopping cart.
+ *
+ * @param {object} food - The food information.
+ * @param {number} quantity - Amount ordered.
+ * @returns {HTMLElement} The completed cart row.
+ */
+function createCartRow(food, quantity) {
+    const row = document.createElement("div");
+    row.className = "cart-item";
+
+    // Container for the product name and subtotal.
+    const details = document.createElement("div");
+    details.className = "cart-item-details";
+
+    const name = document.createElement("strong");
+    name.textContent = food.name;
+
+    const subtotal = document.createElement("span");
+    subtotal.textContent = formatPrice(food.price * quantity);
+
+    details.append(name, subtotal);
+
+    // Container for quantity buttons and number.
+    const controls = document.createElement("div");
+    controls.className = "quantity-controls";
+
+    const decrease = createCartButton(
+        "−", "decrease", food.id
+    );
+
+    const amount = document.createElement("span");
+    amount.className = "quantity-value";
+    amount.textContent = String(quantity);
+
+    const increase = createCartButton(
+        "+",
+        "increase",
+        food.id,
+        quantity >= MAX_QUANTITY
+    );
+
+    const remove = createCartButton(
+        "Remove", "remove", food.id
+    );
+
+    remove.classList.add("remove-btn");
+
+    controls.append(decrease, amount, increase, remove);
+
+    // Combine the row's information and controls.
+    row.append(details, controls);
+
+    return row;
+}
+
+
+/**
+ * Updates the entire cart interface.
+ *
+ * @returns {void}
+ *
+ * Rebuilds the cart rows, recalculates totals,
+ * and enables or disables relevant buttons.
+ */
+function renderCart() {
+    const container = document.getElementById("cart-items");
+    const countElement = document.getElementById("cart-count");
+    const totalElement = document.getElementById("cart-total");
+
+    const clearButton = document.getElementById("clear-cart");
+    const orderButton = document.getElementById("place-order");
+
+    if (!container || !countElement || !totalElement ||
+        !clearButton || !orderButton) {
+        console.error("BiteMenu: Cart elements are missing.");
+        return;
+    }
+
+    // Remove previously displayed cart rows.
+    container.replaceChildren();
+
+    const count = calculateItemCount();
+    const total = calculateCartTotal();
+
+    // Update the visible item count and price.
+    countElement.textContent =
+        `${count} ${count === 1 ? "item" : "items"}`;
+
+    totalElement.textContent = formatPrice(total);
+
+    // Disable controls when nothing has been ordered.
+    clearButton.disabled = count === 0;
+    orderButton.disabled = count === 0;
+
+    // Show an empty-cart message if needed.
+    if (count === 0) {
+        const empty = document.createElement("p");
+
+        empty.className = "cart-empty";
+        empty.textContent =
+            "Your cart is empty. Add something delicious!";
+
+        container.append(empty);
+        return;
+    }
+
+    // Build the cart rows in memory first.
+    const fragment = document.createDocumentFragment();
+
+    for (const [id, quantity] of cart) {
+        const food = findFoodById(id);
+
+        if (food) {
+            const row = createCartRow(food, quantity);
+            fragment.append(row);
+        }
+    }
+
+    container.append(fragment);
+}
+
+
+/**
+ * Removes every item from the shopping cart.
+ *
+ * @returns {void}
+ */
+function clearCart() {
+    cart.clear();
+
+    renderCart();
+    showCartMessage("Your cart has been cleared.");
+}
+
+
+/**
+ * Displays a simulated order summary.
+ *
+ * @returns {void}
+ *
+ * This is not a real checkout.
+ * No order is submitted and no payment is collected.
+ */
+function reviewOrder() {
+    if (cart.size === 0) {
+        return;
+    }
+
+    const lines = ["BITEMENU — ORDER SUMMARY", ""];
+
+    for (const [id, quantity] of cart) {
+        const food = findFoodById(id);
+
+        if (food) {
+            const subtotal = food.price * quantity;
+
+            lines.push(
+                `${quantity} × ${food.name} — ${formatPrice(subtotal)}`
+            );
+        }
+    }
+
+    lines.push("");
+    lines.push(`Total: ${formatPrice(calculateCartTotal())}`);
+    lines.push("");
+    lines.push("Demo only — no order has been placed.");
+
+    window.alert(lines.join("\n"));
+}
+
+
+/**
+ * Handles Add to Cart button clicks in the menu.
+ *
+ * @param {MouseEvent} event - Browser click event.
+ * @returns {void}
+ *
+ * Uses event delegation, so we only need
+ * one listener for all dynamically created cards.
+ */
+function handleMenuCartClick(event) {
+    const button = event.target.closest(
+        'button[data-action="add"]'
+    );
+
+    if (!button || !event.currentTarget.contains(button)) {
+        return;
+    }
+
+    const id = Number(button.dataset.id);
+
+    addToCart(id);
+}
+
+
+/**
+ * Handles clicks on cart quantity and remove buttons.
+ *
+ * @param {MouseEvent} event - Browser click event.
+ * @returns {void}
+ *
+ * Reads the action from the clicked button.
+ */
+function handleCartAction(event) {
+    const button = event.target.closest(
+        "button[data-action]"
+    );
+
+    if (!button || !event.currentTarget.contains(button)) {
+        return;
+    }
+
+    const id = Number(button.dataset.id);
+    const action = button.dataset.action;
+
+    if (action === "increase") {
+        changeQuantity(id, 1);
+    } else if (action === "decrease") {
+        changeQuantity(id, -1);
+    } else if (action === "remove") {
+        removeFromCart(id);
+    }
+}
+
+
+/**
+ * Initializes shopping cart event listeners.
+ *
+ * @returns {void}
+ *
+ * Runs once when the webpage loads.
+ */
+function initializeCart() {
+    const menuGrid = document.getElementById("menu-grid");
+    const cartItems = document.getElementById("cart-items");
+
+    const clearButton = document.getElementById("clear-cart");
+    const orderButton = document.getElementById("place-order");
+
+    // Attach one click listener to the food grid.
+    if (menuGrid) {
+        menuGrid.addEventListener("click", handleMenuCartClick);
+    }
+
+    // Attach one click listener to all cart rows.
+    if (cartItems) {
+        cartItems.addEventListener("click", handleCartAction);
+    }
+
+    if (clearButton) {
+        clearButton.addEventListener("click", clearCart);
+    }
+
+    if (orderButton) {
+        orderButton.addEventListener("click", reviewOrder);
+    }
+
+    // Draw the initial empty cart.
+    renderCart();
+}
+
+
+// Start the shopping cart feature.
+initializeCart();
+
 
