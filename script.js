@@ -993,6 +993,39 @@ function renderCart() {
     clearButton.disabled = count === 0;
     orderButton.disabled = count === 0;
 
+
+/**
+ * BITEMENU v1.2 — CHECKOUT SUMMARY SYNC
+ *
+ * Keep the checkout summary up to date
+ * whenever the shopping cart changes.
+ *
+ * We check whether checkout.js has loaded
+ * and whether the checkout form is visible.
+ */
+const checkoutPanel = document.getElementById(
+    "checkout-panel"
+);
+
+if (
+    checkoutPanel &&
+    !checkoutPanel.hidden &&
+    typeof renderCheckoutSummary === "function"
+) {
+    // Refresh the order summary after cart changes.
+    renderCheckoutSummary();
+
+    // Prevent confusion when all items are removed.
+    if (count === 0) {
+        showCheckoutError(
+            "Your cart is empty. Add an item to continue."
+        );
+    } else {
+        showCheckoutError("");
+    }
+}
+
+
     if (count === 0) {
 
         const empty = document.createElement("p");
@@ -1023,50 +1056,27 @@ function renderCart() {
 }
 
 
-/* =========================================
-   15. SIMULATED ORDER SUMMARY
-   ========================================= */
 
 /**
- * Displays an order summary using an alert.
+ * Opens the BiteMenu checkout interface.
  *
  * @returns {void}
  *
- * This is only a demo.
- * No payment or order submission occurs.
+ * Previously, this function displayed an alert.
+ * In v1.2, it connects the existing cart button
+ * to our new checkout form.
  */
 function reviewOrder() {
 
+    // Do not allow checkout with an empty cart.
     if (cart.size === 0) {
         return;
     }
 
-    const lines = [
-        "BITEMENU — ORDER SUMMARY",
-        ""
-    ];
-
-    for (const [id, quantity] of cart) {
-
-        const food = findFoodById(id);
-
-        if (food) {
-
-            const subtotal = food.price * quantity;
-
-            lines.push(
-                `${quantity} × ${food.name} — ${formatPrice(subtotal)}`
-            );
-        }
-    }
-
-    lines.push("");
-    lines.push(`Total: ${formatPrice(calculateCartTotal())}`);
-    lines.push("");
-    lines.push("Demo only — no order has been placed.");
-
-    window.alert(lines.join("\n"));
+    // This function is defined in checkout.js.
+    openCheckout();
 }
+
 
 
 /* =========================================

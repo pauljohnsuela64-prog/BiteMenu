@@ -11,10 +11,19 @@
     <title>BiteMenu | Fresh & Delicious</title>
 
     <!-- Connects our external CSS stylesheet. -->
+    
+    <!-- Existing website styles. -->
     <link rel="stylesheet" href="style.css">
 
-    <!-- Load JavaScript after HTML has been parsed. -->
-    <script src="script.js" defer></script>
+    <!-- New checkout-specific styles. -->
+    <link rel="stylesheet" href="checkout.css">
+
+    <!-- Existing menu and shopping cart logic. -->
+<script src="script.js" defer></script>
+
+<!-- New checkout and order-history logic. -->
+<script src="checkout.js" defer></script>
+
 </head>
 
 <body>
@@ -207,12 +216,198 @@
             <button type="button" id="place-order"
                     class="cart-btn cart-btn-primary"
                     disabled>
-                Review Order
+                Proceed to Checkout
             </button>
         </div>
 
     </div>
 </section>
+
+
+<!-- =========================================
+     BITEMENU v1.2 — CHECKOUT FORM
+     Initially hidden until the customer
+     chooses Proceed to Checkout.
+     ========================================= -->
+<section
+    id="checkout-panel"
+    class="checkout-panel"
+    aria-labelledby="checkout-heading"
+    hidden
+>
+    <div class="checkout-heading">
+        <p class="section-label">ALMOST THERE</p>
+        <h3 id="checkout-heading">Complete Your Demo Order</h3>
+        <p>
+            Enter fictional customer information to
+            try the checkout process.
+        </p>
+    </div>
+
+    <div class="checkout-layout">
+
+        <!-- CUSTOMER INFORMATION FORM -->
+        <form id="checkout-form" novalidate>
+
+            <div class="checkout-field">
+                <label for="checkout-name">
+                    Full Name
+                </label>
+
+                <input
+                    type="text"
+                    id="checkout-name"
+                    name="customerName"
+                    placeholder="Test Customer"
+                    maxlength="80"
+                    autocomplete="off"
+                    required
+                >
+            </div>
+
+            <div class="checkout-field">
+                <label for="checkout-phone">
+                    Mobile Number
+                </label>
+
+                <input
+                    type="tel"
+                    id="checkout-phone"
+                    name="customerPhone"
+                    placeholder="09123456789"
+                    maxlength="20"
+                    autocomplete="off"
+                    required
+                >
+            </div>
+
+            <div class="checkout-field">
+                <label for="checkout-address">
+                    Delivery Address
+                </label>
+
+                <textarea
+                    id="checkout-address"
+                    name="customerAddress"
+                    rows="3"
+                    maxlength="200"
+                    placeholder="123 Sample Street, Quezon City"
+                    required
+                ></textarea>
+            </div>
+
+            <!-- JavaScript displays validation errors here. -->
+            <p
+                id="checkout-error"
+                class="checkout-error"
+                role="alert"
+                hidden
+            ></p>
+
+            <div class="checkout-actions">
+
+                <button
+                    type="button"
+                    id="cancel-checkout"
+                    class="checkout-cancel"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="checkout-submit"
+                >
+                    Confirm Demo Order
+                </button>
+
+            </div>
+
+            <p class="checkout-note">
+                Demonstration only. No real order or
+                payment will be processed.
+            </p>
+
+        </form>
+
+        <!-- CHECKOUT ORDER SUMMARY -->
+        <aside
+            class="checkout-summary"
+            aria-label="Checkout order summary"
+        >
+            <h4>Your Order Summary</h4>
+
+            <!-- JavaScript inserts selected food here. -->
+            <div id="checkout-summary"></div>
+        </aside>
+
+    </div>
+</section>
+
+
+<!-- =========================================
+     ORDER CONFIRMATION
+     Appears after a successful demo checkout.
+     ========================================= -->
+<section
+    id="checkout-confirmation"
+    class="checkout-confirmation"
+    aria-labelledby="confirmation-heading"
+    hidden
+>
+    <div class="confirmation-icon" aria-hidden="true">
+        ✓
+    </div>
+
+    <h3 id="confirmation-heading" tabindex="-1">
+        Demo Order Confirmed!
+    </h3>
+
+    <p id="confirmation-message" role="status"></p>
+
+    <button
+        type="button"
+        id="continue-shopping"
+        class="checkout-submit"
+    >
+        Continue Browsing
+    </button>
+</section>
+
+
+<!-- =========================================
+     DEMO ORDER HISTORY
+     Stores only non-personal order information.
+     ========================================= -->
+<section
+    id="order-history"
+    class="order-history"
+    aria-labelledby="history-heading"
+>
+    <div class="history-header">
+        <div>
+            <p class="section-label">YOUR PREVIOUS ORDERS</p>
+            <h3 id="history-heading">Demo Order History</h3>
+        </div>
+
+        <button
+            type="button"
+            id="clear-order-history"
+            class="checkout-cancel"
+            disabled
+        >
+            Clear History
+        </button>
+    </div>
+
+    <!-- JavaScript inserts previous orders here. -->
+    <div id="history-list">
+        <p class="history-empty">
+            No demo orders yet.
+        </p>
+    </div>
+</section>
+
 
 </div>
 
