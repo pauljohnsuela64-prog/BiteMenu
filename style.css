@@ -948,3 +948,280 @@ button:disabled {
 }
 
 
+
+
+/* =========================================
+   BITEMENU v1.1 — UI POLISH
+   ========================================= */
+
+/* DESIGN VARIABLES
+   These make shared colors and effects easy
+   to change throughout the website.
+*/
+:root {
+    --primary-dark: #111827;
+    --secondary-dark: #1f2937;
+    --accent: #f59e0b;
+    --accent-light: #fbbf24;
+    --surface: #ffffff;
+    --text-primary: #1f2937;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+}
+
+/* HEADER
+   Keeps navigation visible while scrolling.
+*/
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(17, 24, 39, 0.97);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Prevent section headings from hiding
+   underneath the sticky navigation.
+*/
+html {
+    scroll-padding-top: 110px;
+}
+
+/* LOGO */
+.logo {
+    font-size: 30px;
+    letter-spacing: -1px;
+}
+
+/* NAVIGATION LINKS */
+nav a {
+    position: relative;
+    padding: 6px 0;
+}
+
+/* Animated line below navigation links. */
+nav a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s ease;
+}
+
+nav a:hover::after {
+    transform: scaleX(1);
+}
+
+/* HERO SECTION
+   Layered gradients add depth without
+   requiring another external photograph.
+*/
+.hero {
+    position: relative;
+    overflow: hidden;
+    padding: 130px 0;
+    background:
+        radial-gradient(
+            circle at 80% 20%,
+            rgba(245, 158, 11, 0.13),
+            transparent 40%
+        ),
+        linear-gradient(
+            135deg,
+            #111827 0%,
+            #1f2937 55%,
+            #374151 100%
+        );
+}
+
+/* Make sure the hero content sits above
+   the decorative background layers.
+*/
+.hero-content {
+    position: relative;
+    z-index: 1;
+}
+
+.hero h1 {
+    font-size: clamp(38px, 5vw, 64px);
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1.15;
+}
+
+.hero h1 span {
+    display: block;
+    margin-top: 10px;
+}
+
+.hero-description {
+    font-size: 19px;
+    line-height: 1.8;
+}
+
+/* PRIMARY BUTTON */
+.btn-primary {
+    border-radius: 30px;
+    padding: 16px 34px;
+    box-shadow: 0 8px 18px rgba(245, 158, 11, 0.2);
+}
+
+/* SECTION HEADINGS */
+.section-heading h2 {
+    font-size: clamp(28px, 3vw, 40px);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+/* FOOD CARD GRID */
+.menu-grid {
+    gap: 28px;
+}
+
+/* FOOD CARDS */
+.food-card {
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--card-shadow);
+}
+
+.food-card:hover {
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
+}
+
+/* FOOD CARD CONTENT */
+.food-content {
+    padding: 24px;
+}
+
+.food-content h3 {
+    font-size: 21px;
+    line-height: 1.35;
+}
+
+.food-category {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 5px 11px;
+    border-radius: 20px;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+.food-price {
+    font-size: 24px;
+    color: #15803d;
+}
+
+/* ADD TO CART BUTTON */
+.add-to-cart-btn {
+    min-height: 46px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(245, 158, 11, 0.15);
+}
+
+/* SHOPPING CART */
+.shopping-cart {
+    border-radius: 20px;
+    box-shadow: 0 14px 42px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border);
+}
+
+.cart-header h3 {
+    font-weight: 800;
+}
+
+.cart-item {
+    transition: background-color 0.2s ease;
+}
+
+.cart-item:hover {
+    background-color: #fafafa;
+}
+
+/* CART ACTION BUTTONS */
+.cart-btn {
+    min-height: 46px;
+    border-radius: 10px;
+}
+
+/* KEYBOARD ACCESSIBILITY */
+button:focus-visible,
+nav a:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 3px;
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+    html {
+        scroll-padding-top: 155px;
+    }
+
+    .site-header {
+        padding: 14px 0;
+    }
+
+    .logo {
+        font-size: 27px;
+    }
+
+    nav {
+        gap: 10px 16px;
+    }
+
+    .hero {
+        padding: 78px 0;
+    }
+
+    .hero h1 {
+        font-size: clamp(32px, 8vw, 42px);
+        letter-spacing: -0.8px;
+    }
+
+    .hero-description {
+        font-size: 16px;
+        line-height: 1.7;
+    }
+
+    .btn-primary {
+        padding: 14px 26px;
+    }
+
+    .menu-grid {
+        gap: 20px;
+    }
+
+    .food-content {
+        padding: 20px;
+    }
+
+    .shopping-cart {
+        border-radius: 14px;
+    }
+}
+
+/* REDUCED MOTION
+   Disable decorative transitions when
+   visitors request less movement.
+*/
+@media (prefers-reduced-motion: reduce) {
+    nav a::after,
+    .cart-item,
+    .add-to-cart-btn {
+        transition: none;
+    }
+
+    .food-card:hover,
+    .add-to-cart-btn:hover {
+        transform: none;
+    }
+}
+
+
