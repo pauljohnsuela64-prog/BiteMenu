@@ -1023,50 +1023,27 @@ function renderCart() {
 }
 
 
-/* =========================================
-   15. SIMULATED ORDER SUMMARY
-   ========================================= */
 
 /**
- * Displays an order summary using an alert.
+ * Opens the BiteMenu checkout interface.
  *
  * @returns {void}
  *
- * This is only a demo.
- * No payment or order submission occurs.
+ * Previously, this function displayed an alert.
+ * In v1.2, it connects the existing cart button
+ * to our new checkout form.
  */
 function reviewOrder() {
 
+    // Do not allow checkout with an empty cart.
     if (cart.size === 0) {
         return;
     }
 
-    const lines = [
-        "BITEMENU — ORDER SUMMARY",
-        ""
-    ];
-
-    for (const [id, quantity] of cart) {
-
-        const food = findFoodById(id);
-
-        if (food) {
-
-            const subtotal = food.price * quantity;
-
-            lines.push(
-                `${quantity} × ${food.name} — ${formatPrice(subtotal)}`
-            );
-        }
-    }
-
-    lines.push("");
-    lines.push(`Total: ${formatPrice(calculateCartTotal())}`);
-    lines.push("");
-    lines.push("Demo only — no order has been placed.");
-
-    window.alert(lines.join("\n"));
+    // This function is defined in checkout.js.
+    openCheckout();
 }
+
 
 
 /* =========================================
