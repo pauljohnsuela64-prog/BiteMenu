@@ -1,0 +1,14 @@
+
+# Installed npm dependencies can be recreated.
+node_modules/
+
+# Browser test reports and screenshots.
+playwright-report/
+test-results/
+
+# Temporary Playwright files.
+playwright/.cache/
+
+# Local environment files should not be committed.
+.env
+.env.local

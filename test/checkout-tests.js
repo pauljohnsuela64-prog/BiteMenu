@@ -198,8 +198,13 @@
         renderCart();
     }
 
-    // Show test results in DevTools Console.
-    console.table(results);
+    
+// Expose checkout results to our CI browser tests.
+window.__bitemenuCheckoutTestResults = results;
+
+// Show test results in DevTools Console.
+console.table(results);
+
 
     const failed = results.filter(function (result) {
         return result.status === "FAIL";

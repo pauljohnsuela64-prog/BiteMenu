@@ -1,0 +1,16 @@
+{
+  "name": "bitemenu",
+  "version": "1.3.0",
+  "private": true,
+  "description": "BiteMenu restaurant demo with automated browser tests",
+  "scripts": {
+    "check": "node --check script.js && node --check checkout.js && node --check test/cart-tests.js && node --check test/checkout-tests.js && node --check tests/bitemenu.spec.js && node --check playwright.config.js",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "http-server": "^14.1.1"
+  }
+}
