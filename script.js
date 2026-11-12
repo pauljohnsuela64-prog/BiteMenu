@@ -993,6 +993,39 @@ function renderCart() {
     clearButton.disabled = count === 0;
     orderButton.disabled = count === 0;
 
+
+/**
+ * BITEMENU v1.2 — CHECKOUT SUMMARY SYNC
+ *
+ * Keep the checkout summary up to date
+ * whenever the shopping cart changes.
+ *
+ * We check whether checkout.js has loaded
+ * and whether the checkout form is visible.
+ */
+const checkoutPanel = document.getElementById(
+    "checkout-panel"
+);
+
+if (
+    checkoutPanel &&
+    !checkoutPanel.hidden &&
+    typeof renderCheckoutSummary === "function"
+) {
+    // Refresh the order summary after cart changes.
+    renderCheckoutSummary();
+
+    // Prevent confusion when all items are removed.
+    if (count === 0) {
+        showCheckoutError(
+            "Your cart is empty. Add an item to continue."
+        );
+    } else {
+        showCheckoutError("");
+    }
+}
+
+
     if (count === 0) {
 
         const empty = document.createElement("p");
