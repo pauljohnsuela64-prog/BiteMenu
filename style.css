@@ -845,3 +845,106 @@ button:disabled {
 }
 
 
+
+/* =========================================
+   BITEMENU v1.1 — FOOD CARD DESIGN
+   ========================================= */
+
+/* Keep each food card neatly organized. */
+.food-card {
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid #e8e8e8;
+}
+
+/* Image area with a consistent height. */
+.food-image {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+    background: #f2e8db;
+    font-size: 65px;
+}
+
+/* Make photographs fill the image container. */
+.food-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+/* Enlarge the image slightly when hovered. */
+.food-card:hover .food-image img {
+    transform: scale(1.05);
+}
+
+/* Hide images or fallback when marked hidden. */
+.food-image [hidden] {
+    display: none;
+}
+
+/* Center the fallback emoji. */
+.food-image.image-failed .food-fallback {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+/* Space food information consistently. */
+.food-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 22px;
+}
+
+/* Make descriptions take up available space. */
+.food-description {
+    flex: 1;
+    min-height: 0;
+}
+
+/* Consistent Add to Cart button placement. */
+.add-to-cart-btn {
+    margin-top: 18px;
+    transition:
+        background-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.add-to-cart-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Responsive mobile card styles. */
+@media (max-width: 600px) {
+    .food-image {
+        height: 200px;
+    }
+
+    .food-content {
+        padding: 18px;
+    }
+}
+
+/* Respect visitors who prefer reduced movement. */
+@media (prefers-reduced-motion: reduce) {
+    .food-image img,
+    .add-to-cart-btn {
+        transition: none;
+    }
+
+    .food-card:hover .food-image img,
+    .add-to-cart-btn:hover {
+        transform: none;
+    }
+}
+
+

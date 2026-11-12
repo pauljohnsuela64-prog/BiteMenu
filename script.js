@@ -92,6 +92,27 @@ const menuItems = [
 ];
 
 
+
+/*
+ * BITEMENU v1.1 — FOOD PHOTOGRAPHY
+ *
+ * Each food ID is associated with an image.
+ * The IDs match the items in menuItems.
+ *
+ * Images are loaded only when needed.
+ */
+const foodImages = {
+    1: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd",
+    2: "https://images.unsplash.com/photo-1550547660-d9450f859349",
+    3: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002",
+    4: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38",
+    5: "https://images.unsplash.com/photo-1509042239860-f550ce710b93",
+    6: "https://images.unsplash.com/photo-1499638673689-79a0b5115d87",
+    7: "https://images.unsplash.com/photo-1578985545062-69928b1d9587",
+    8: "https://images.unsplash.com/photo-1563805042-7684c019e1cb"
+};
+
+
 /* =========================================
    2. APPLICATION STATE
    ========================================= */
@@ -165,53 +186,88 @@ function findFoodById(id) {
  * fills them with food information, and
  * returns the card.
  */
+
+/**
+ * Creates a restaurant food card with photography.
+ *
+ * @param {object} item - Menu item information.
+ * @returns {HTMLElement} Completed food card.
+ *
+ * Creates the image, category, title, description,
+ * price and Add to Cart button.
+ *
+ * If a photograph cannot load, the food emoji
+ * is displayed instead.
+ */
 function createFoodCard(item) {
 
-    // Main card container.
+    // Create the main card container.
     const card = document.createElement("article");
     card.className = "food-card";
 
-    // Food illustration container.
-    const image = document.createElement("div");
-    image.className = "food-image";
+    // Create the image area.
+    const imageContainer = document.createElement("div");
+    imageContainer.className = "food-image";
 
-    const emoji = document.createElement("span");
-    emoji.textContent = item.emoji;
-    emoji.setAttribute("aria-hidden", "true");
+    // Create a real HTML image element.
+    const image = document.createElement("img");
 
-    image.append(emoji);
+    // Read the image URL using the food item's ID.
+    const imageUrl = foodImages[item.id];
 
-    // Food information container.
+    image.src = `${imageUrl}?auto=format&fit=crop&w=800&q=80`;
+    image.alt = item.name;
+
+    // Improve image-loading performance.
+    image.loading = "lazy";
+    image.decoding = "async";
+
+    // Create a fallback if the photograph fails.
+    const fallback = document.createElement("span");
+    fallback.textContent = item.emoji;
+    fallback.className = "food-fallback";
+    fallback.setAttribute("aria-hidden", "true");
+    fallback.hidden = true;
+
+    // Handle unavailable images without breaking cards.
+    image.addEventListener("error", function () {
+        image.hidden = true;
+        fallback.hidden = false;
+        imageContainer.classList.add("image-failed");
+    });
+
+    imageContainer.append(image, fallback);
+
+    // Create the food information section.
     const content = document.createElement("div");
     content.className = "food-content";
 
-    // Food category.
+    // Create category label.
     const category = document.createElement("span");
     category.className = "food-category";
     category.textContent = item.category;
 
-    // Food name.
+    // Create food name.
     const title = document.createElement("h3");
     title.textContent = item.name;
 
-    // Food description.
+    // Create description.
     const description = document.createElement("p");
     description.className = "food-description";
     description.textContent = item.description;
 
-    // Food price.
+    // Create price.
     const price = document.createElement("strong");
     price.className = "food-price";
     price.textContent = formatPrice(item.price);
 
-    // Add to Cart button.
+    // Create Add to Cart button.
     const addButton = document.createElement("button");
-
     addButton.type = "button";
     addButton.className = "add-to-cart-btn";
     addButton.textContent = "Add to Cart";
 
-    // Store the item ID and action on the button.
+    // Keep compatibility with the existing cart logic.
     addButton.dataset.id = String(item.id);
     addButton.dataset.action = "add";
 
@@ -220,7 +276,7 @@ function createFoodCard(item) {
         `Add ${item.name} to cart`
     );
 
-    // Combine all card information.
+    // Insert all card information.
     content.append(
         category,
         title,
@@ -229,7 +285,7 @@ function createFoodCard(item) {
         addButton
     );
 
-    card.append(image, content);
+    card.append(imageContainer, content);
 
     return card;
 }
