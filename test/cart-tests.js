@@ -265,8 +265,14 @@
         renderCart();
     }
 
-    // Show the completed results in DevTools.
-    console.table(results);
+    
+// Make the results accessible to Playwright.
+// This also keeps the original DevTools tests working.
+window.__bitemenuCartTestResults = results;
+
+// Show the completed results in DevTools.
+console.table(results);
+
 
     const failed = results.filter(function (result) {
         return result.status === "FAIL";
